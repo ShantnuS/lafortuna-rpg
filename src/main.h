@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "lcd.h"
 #include "switches.h"
+#include "color.h"
 
 #define LED_ON      PORTB |=  _BV(PINB7)
 #define LED_OFF     PORTB &= ~_BV(PINB7) 
@@ -13,6 +14,7 @@
 #define COMPONENTS	2;
 #define NAME_LENGTH 12;
 #define MAX_ENTITIES 10;
+#define APLHA 0x0440;
 
 typedef char Name[12];
 typedef int(*IntFunc)(void);
