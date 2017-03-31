@@ -14,7 +14,7 @@
 #define COMPONENTS	2;
 #define NAME_LENGTH 12;
 #define MAX_ENTITIES 10;
-#define APLHA 0x0440;
+
 
 typedef char Name[12];
 typedef int(*IntFunc)(void);
@@ -35,5 +35,6 @@ typedef struct
 	int16_t colour;
 } entity;
 
-void showWin1();
-void toggleLED();
+
+int redraw();
+int loop();
