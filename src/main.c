@@ -3,25 +3,63 @@
 
 const int8_t tile_size = 20, room_size = 20;
 
-uint16_t colors[400];
-
-
-int8_t player_x = 1, player_y = 1, old_player_x = 1, old_player_y = 1;
-rectangle background, test = { 0, 19 ,0, 19 };
-rectangle player_sprite;
+int8_t 
+	player_x = 1, player_y = 1, old_player_x = 1, old_player_y = 1,
+	room_x = 0, room_y = 1;
 
 const size_t s = sizeof(char) * 16;
 char * buffer;
 
-void draw_room()
+uint8_t life = 10, att = 1, str = 1, stm = 1, def = 1, wis = 1, inte = 1;
+uint16_t xp = 0, money = 42, level = 1;
+char name[6] = "mallocc";
+
+void quick_debug_print(int c)
 {
-	int i, j;
+	sprintf(buffer, "%d", c);
+	display_string(buffer);
+}
+
+inline uint8_t get_player_tile(uint8_t x, uint8_t y)
+{
+	return room_data[room_x][room_y][x + y * 16];
+}
+
+void draw_room(uint8_t x, uint8_t y)
+{
+	int i, j,c =0;
 	// room tiles
-	for (i = 0; i < LCDHEIGHT; i += tile_size)
-		for (j = 0; j < LCDWIDTH; j += tile_size)
-		{
-			fill_sprite(i, j, tile_size, test_tile);
-		}
+	for (i = 0; i < 16; i++)
+		for (j = 0; j < 11; j++, c++)
+			fill_sprite(i * tile_size, j * tile_size, tile_size, tile_data[get_player_tile(i,j)]);
+}
+
+int redraw()
+{
+	// player tiles
+	overlay_sprite(player_x * tile_size, player_y * tile_size, tile_size, tile_data[player], tile_data[get_player_tile(player_x, player_y)]);
+
+	// redraw previous walked tile
+	fill_sprite(old_player_x * tile_size, old_player_y * tile_size, tile_size, tile_data[get_player_tile(old_player_x, old_player_y)]);
+
+	// on screen text
+	sprintf(buffer, "Player Coord:     %d, %d", player_x, player_y);
+	display_string_xy(buffer, 0,0);
+	sprintf(buffer, "Old Player Coord: %d, %d", old_player_x, old_player_y);
+	display_string_xy(buffer, 0,8);
+	sprintf(buffer, "Room Coord: %d, %d", room_x, room_y);
+	display_string_xy(buffer, 0, 16);
+
+	display.foreground = YELLOW;
+	sprintf(buffer, "%-6s", name);
+	display_string_xy(buffer, 3, tile_size * 11 + 2);
+	display.foreground = WHITE;
+	sprintf(buffer, "|Life:%-3i|XP:%-4i|%-4ic|Lv%-2i", life, xp, money,level);
+	display_string_xy(buffer, 50, tile_size * 11 + 2);
+	sprintf(buffer, "Stats|Att:%-2i|Str:%-2i|Stm:%-2i|Def:%-2i|Wis:%-2i|Int:%-2i", att, str, stm, def, wis, inte);
+	display_string_xy(buffer, 3, tile_size * 11 + 10);
+
+	return 1;
 }
 
 void draw_gui()
@@ -31,30 +69,12 @@ void draw_gui()
 	i = 0;
 	j = tile_size * 11;
 	for (; i < LCDHEIGHT; i += tile_size)
-		fill_sprite(i, j, tile_size, gui_middle);
+		fill_sprite(i, j, tile_size, tile_data[gui_middle]);
 	i = 0;
-	fill_sprite(i, j, tile_size, gui_left);
+	fill_sprite(i, j, tile_size, tile_data[gui_left]);
 	i = tile_size * 15;
-	fill_sprite(i, j, tile_size, gui_right);
+	fill_sprite(i, j, tile_size, tile_data[gui_right]);
 }
-
-int redraw()
-{
-	// player tiles
-	overlay_sprite(player_x * tile_size, player_y * tile_size, tile_size, player, test_tile);
-
-	// redraw previous walked tile
-	fill_sprite(old_player_x * tile_size, old_player_y * tile_size, tile_size, test_tile);
-
-	// on screen text
-	sprintf(buffer, "Player Coord:     %d, %d", player_x, player_y);
-	display_string_xy(buffer, 3, tile_size * 11 + 2);
-	sprintf(buffer, "Old Player Coord: %d, %d", old_player_x, old_player_y);
-	display_string_xy(buffer, 3, tile_size * 11 + 10);
-
-	return 1;
-}
-
 inline void store_player_pos()
 {
 	old_player_x = player_x;
@@ -63,7 +83,7 @@ inline void store_player_pos()
 
 int loop()
 {
-	int event_happened = 0;
+	uint8_t event_happened = 0, room_change = 0, current_tile = 0, walled = 0;
 	while (1) 
 	{
 		_delay_ms(50);
@@ -93,7 +113,51 @@ int loop()
 		}
 		if (event_happened)
 		{
-			redraw();
+			if (player_x > 15)
+			{
+				player_x = 0;
+				room_x++;
+				room_change = 1;
+			}
+			if (player_x < 0)
+			{
+				player_x = 15;
+				room_x--;
+				room_change = 1;
+			}
+			if (player_y > 10)
+			{
+				player_y = 0;
+				room_y++;
+				room_change = 1;
+			}
+			if (player_y < 0)
+			{
+				player_y = 10;
+				room_y--;
+				room_change = 1;
+			}
+			if (room_change)
+			{
+				draw_room(room_x, room_y);
+				draw_gui();
+				redraw();
+				room_change = 0;
+			}	
+
+			current_tile = get_player_tile(player_x, player_y);
+			switch (current_tile)
+			{
+			case water:
+				walled = 1;
+				player_x = old_player_x;
+				player_y = old_player_y;
+				break;
+			default:
+				redraw();
+			}
+
+			
 			event_happened = 0;
 		}
 	}
@@ -121,17 +185,9 @@ int main()
 
 	OCR3A = 0;
 
-	rectangle temp = { 0,display.width,0,display.height };
-	background = temp;
-
-	int i;
-	for (i = 0; i < 400; i++)
-		colors[i] = ORANGE_1;
-
-	buffer = malloc(s);
+	buffer = malloc(s);	
 	
-	
-	draw_room();
+	draw_room(room_x,room_y);
 	draw_gui();
 	redraw();
 	loop();
