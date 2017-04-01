@@ -48,3 +48,5 @@ void display_string(char *str);
 void display_string_xy(char *str, uint16_t x, uint16_t y);
 void display_register(uint8_t reg);
 void fill_rectangle_sprite(rectangle r, uint16_t* col);
+void fill_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col); 
+void overlay_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col, uint16_t * back);

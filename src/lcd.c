@@ -169,7 +169,7 @@ void fill_rectangle(rectangle r, uint16_t col)
 
 void fill_rectangle_indexed(rectangle r, uint16_t* col)
 {
-    uint16_t x, y, c;
+    uint16_t x, y;
     write_cmd(COLUMN_ADDRESS_SET);
     write_data16(r.left);
     write_data16(r.right);
@@ -182,20 +182,34 @@ void fill_rectangle_indexed(rectangle r, uint16_t* col)
 			write_data16(*col++);
 }
 
-void fill_rectangle_sprite(rectangle r, uint16_t* col)
+void fill_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col)
 {
-	uint16_t x, y, c;
+	uint16_t x, y, c = 0;
 	write_cmd(COLUMN_ADDRESS_SET);
-	write_data16(r.left);
-	write_data16(r.right);
+	write_data16(l);
+	write_data16(l + s - 1);
 	write_cmd(PAGE_ADDRESS_SET);
-	write_data16(r.top);
-	write_data16(r.bottom);
+	write_data16(t);
+	write_data16(t + s - 1);
 	write_cmd(MEMORY_WRITE);
-	for (x = r.left; x <= r.right; x++)
-		for (y = r.top; y <= r.bottom; y++, c++)
+	for (x = l; x < l + s; x++)
+		for (y = t; y < t + s; y++, c++)
 			write_data16(col[c]);
+}
 
+void overlay_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col, uint16_t * back)
+{
+	uint16_t x, y, c = 0;
+	write_cmd(COLUMN_ADDRESS_SET);
+	write_data16(l);
+	write_data16(l + s - 1);
+	write_cmd(PAGE_ADDRESS_SET);
+	write_data16(t);
+	write_data16(t + s - 1);
+	write_cmd(MEMORY_WRITE);
+	for (x = l; x < l + s; x++)
+		for (y = t; y < t + s; y++, c++)
+			write_data16(col[c] > 0x0000 ? col[c] : back[c]);
 }
 
 
