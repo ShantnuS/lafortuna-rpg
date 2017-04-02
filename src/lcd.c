@@ -13,6 +13,8 @@
 #include "ili934x.h"
 #include "lcd.h"
 
+
+
 lcd display;
 
 void init_lcd()
@@ -167,6 +169,16 @@ void fill_rectangle(rectangle r, uint16_t col)
     }
 }
 
+inline uint16_t _4to16bit(uint16_t c)
+{
+	return ((c & 3) << R_16) | ((c & 1) << G_16) | (c & 3);
+}
+
+inline uint16_t _6to16bit(char c)
+{
+	return (c & 48) << 10 | (c & 12) << 7 | (c & 3) << 3 | 0x39E7;
+}
+
 void fill_rectangle_indexed(rectangle r, uint16_t* col)
 {
     uint16_t x, y;
@@ -182,9 +194,9 @@ void fill_rectangle_indexed(rectangle r, uint16_t* col)
 			write_data16(*col++);
 }
 
-void fill_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col)
+void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col)
 {
-	uint16_t x, y, c = 0;
+	uint16_t c = 0;
 	write_cmd(COLUMN_ADDRESS_SET);
 	write_data16(l);
 	write_data16(l + s - 1);
@@ -192,26 +204,28 @@ void fill_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col)
 	write_data16(t);
 	write_data16(t + s - 1);
 	write_cmd(MEMORY_WRITE);
-	for (x = l; x < l + s; x++)
-		for (y = t; y < t + s; y++, c++)
-			write_data16(col[c]);
+	for (c = 0; c < s * s; c++)
+		write_data16(_6to16bit(col[c] & 63));
 }
 
-void overlay_sprite(uint16_t l, uint16_t t, uint16_t s, uint16_t* col, uint16_t * back)
+void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 {
-	uint16_t x, y, c = 0;
-	write_cmd(COLUMN_ADDRESS_SET);
-	write_data16(l);
-	write_data16(l + s - 1);
-	write_cmd(PAGE_ADDRESS_SET);
-	write_data16(t);
-	write_data16(t + s - 1);
-	write_cmd(MEMORY_WRITE);
-	for (x = l; x < l + s; x++)
-		for (y = t; y < t + s; y++, c++)
-			write_data16(col[c] > 0x0000 ? col[c] : back[c]);
+	uint16_t x , y , c = 0;
+	for (y = t; y <= t + s - 1; ++y)
+		for (x = l; x <= l + s - 1; ++x)		
+		{
+			write_cmd(COLUMN_ADDRESS_SET);
+			write_data16(x);
+			write_data16(x);
+			write_cmd(PAGE_ADDRESS_SET);
+			write_data16(y);
+			write_data16(y);
+			write_cmd(MEMORY_WRITE);
+			if (col[c] > 0x00)
+				write_data16(_6to16bit(col[c] & 63));
+			c++;
+		}
 }
-
 
 void clear_screen()
 {

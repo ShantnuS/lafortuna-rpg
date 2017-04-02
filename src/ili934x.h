@@ -13,7 +13,7 @@
 #define write_data(data)			asm volatile("sts %0,%1" :: "i" (DATA_ADDR), "r" (data) : "memory");
 #define write_data16(data)			asm volatile("sts %0,%B1 \n\t sts %0,%A1" :: "i" (DATA_ADDR), "r" (data)  : "memory");
 #define write_cmd_data(cmd, data)	asm volatile("sts %0,%1 \n\t sts %2,%3" :: "i" (CMD_ADDR), "r" (cmd), "i" (DATA_ADDR), "r" (data)  : "memory");
-  
+
 /* Basic Commands */
 #define NO_OPERATION								0x00
 #define SOFTWARE_RESET								0x01

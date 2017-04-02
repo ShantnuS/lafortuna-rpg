@@ -12,7 +12,7 @@ char * buffer;
 
 uint8_t life = 10, att = 1, str = 1, stm = 1, def = 1, wis = 1, inte = 1;
 uint16_t xp = 0, money = 42, level = 1;
-char name[6] = "mallocc";
+char name[6] = "malloc";
 
 void quick_debug_print(int c)
 {
@@ -31,16 +31,16 @@ void draw_room(uint8_t x, uint8_t y)
 	// room tiles
 	for (i = 0; i < 16; i++)
 		for (j = 0; j < 11; j++, c++)
-			fill_sprite(i * tile_size, j * tile_size, tile_size, tile_data[get_player_tile(i,j)]);
+			fill_sprite6(i * tile_size, j * tile_size, tile_size, tile_data[get_player_tile(i,j)]);
 }
 
 int redraw()
 {
 	// player tiles
-	overlay_sprite(player_x * tile_size, player_y * tile_size, tile_size, tile_data[player], tile_data[get_player_tile(player_x, player_y)]);
+	overlay_sprite6(player_x * tile_size, player_y * tile_size, tile_size, tile_data[player]);
 
 	// redraw previous walked tile
-	fill_sprite(old_player_x * tile_size, old_player_y * tile_size, tile_size, tile_data[get_player_tile(old_player_x, old_player_y)]);
+	fill_sprite6(old_player_x * tile_size, old_player_y * tile_size, tile_size, tile_data[get_player_tile(old_player_x, old_player_y)]);
 
 	// on screen text
 	sprintf(buffer, "Player Coord:     %d, %d", player_x, player_y);
@@ -69,11 +69,11 @@ void draw_gui()
 	i = 0;
 	j = tile_size * 11;
 	for (; i < LCDHEIGHT; i += tile_size)
-		fill_sprite(i, j, tile_size, tile_data[gui_middle]);
+		fill_sprite6(i, j, tile_size, tile_data[gui_middle]);
 	i = 0;
-	fill_sprite(i, j, tile_size, tile_data[gui_left]);
+	fill_sprite6(i, j, tile_size, tile_data[gui_left]);
 	i = tile_size * 15;
-	fill_sprite(i, j, tile_size, tile_data[gui_right]);
+	fill_sprite6(i, j, tile_size, tile_data[gui_right]);
 }
 inline void store_player_pos()
 {
