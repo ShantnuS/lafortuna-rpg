@@ -12,6 +12,7 @@
 #define write_cmd(cmd)				asm volatile("sts %0,%1" :: "i" (CMD_ADDR), "r" (cmd) : "memory");
 #define write_data(data)			asm volatile("sts %0,%1" :: "i" (DATA_ADDR), "r" (data) : "memory");
 #define write_data16(data)			asm volatile("sts %0,%B1 \n\t sts %0,%A1" :: "i" (DATA_ADDR), "r" (data)  : "memory");
+#define write_read16(data)			asm volatile("mov %1,%0" : "=r" (data) : "r" (DATA_ADDR) : "memory");
 #define write_cmd_data(cmd, data)	asm volatile("sts %0,%1 \n\t sts %2,%3" :: "i" (CMD_ADDR), "r" (cmd), "i" (DATA_ADDR), "r" (data)  : "memory");
 
 /* Basic Commands */
