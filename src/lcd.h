@@ -60,7 +60,7 @@ void display_register(uint8_t reg);
 
 void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
 void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
-void blend_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col);
+void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e);
 
 inline uint16_t _6to16bit(char c);
 inline uint16_t _4to16bit(uint16_t c);

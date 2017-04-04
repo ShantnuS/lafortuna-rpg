@@ -227,9 +227,34 @@ void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 
 void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e)
 {
-	uint16_t x, y, c = 0;
-	for (y = t; y <= t + s - 1; ++y)
-		for (x = l; x <= l + s - 1; ++x, c++)
+	uint16_t
+		i_1 = 0, i_2 = 0, 
+		e_1 = 0, e_2 = 0, 
+		x = 0, y = 0, 
+		_1 = 0, _2 = 0, 
+		c = 0;
+
+	if (e == 0x0)
+	{
+		i_1 = t;
+		i_2 = l;
+		e_1 = t + s - 1;
+		e_2 = l + s - 1;
+		_1 = 1;
+		_2 = 1;
+	}
+	else if ((e & 0x1) == 0x1)
+	{
+		i_1 = t;
+		i_2 = l + s - 1;
+		e_1 = t + s - 1;
+		e_2 = l;
+		_1 = 1;
+		_2 = -1;
+	}
+
+	for (y = i_1; y <= e_1; y += _1)
+		for (x = i_2; x <= e_2; x += _2, c++)
 		{
 			write_cmd(COLUMN_ADDRESS_SET);
 			write_data16(x);

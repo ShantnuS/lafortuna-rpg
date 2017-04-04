@@ -45,84 +45,81 @@ void draw_gui()
 	i = tile_size * 15;
 	fill_sprite6(i, j, tile_size, other_data[gui_right]);
 }
-void draw_area(uint8_t x, uint8_t y)
-{
-	uint8_t t = 0, t_x, t_y, l, player_prq = 0, o_id, p_id, i;
-	mob * m;
-	object * o, * p;
-	for (t_y = 0; t_y < area_size_y; ++t_y)
-		for (t_x = 0; t_x < area_size_x; ++t_x, ++t)
-		{
-			player_prq = PLAYER.x == t_x && PLAYER.y == t_y;
-			o_id = w_getw(x, y, t, _o_object);
-			p_id = w_getw(x, y, t, _p_object);
-			o = o_id == 0 ? 0 : &obj_arr[o_id - 1];
-			p = p_id == 0 ? 0 : &obj_arr[p_id - 1];
-			for (l = 0; l < 7; ++l)
-			{
-				if (l == player_layer)
-				{
-					for (i = 0; i < mob_amt; ++i)
-					{
-						m = &mob_arr[i];
-						if (m->area_x == x && m->area_y == y && m->x == t_x && m->y == t_y)
-							overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
-					}
-					if(player_prq)
-						overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
-				}
-				else if (w_getb(x, y, t, _layer) == l)
-				{
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[w_getb(x, y, t, _data_id)]);					
-				}
-				else if (o != 0 && o->layer == l)
-				{
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[o->data_id]);
-				}
-				else if (p != 0 && p->layer == l)
-				{
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[p->data_id]);
-				}
-			}
-		}
-}
+
 void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 {
-	object * o, *p;
-	mob * m;
-	uint8_t t = x + y * area_size_x, t_x = x, t_y = y, l, player_prq = 0, o_id, p_id, i;
-	player_prq = PLAYER.x == t_x && PLAYER.y == t_y;
-	o_id = w_getw(a_x, a_y, t, _o_object);
-	p_id = w_getw(a_x, a_y, t, _p_object);
-	o = o_id == 0 ? 0 : &obj_arr[o_id - 1];
-	p = p_id == 0 ? 0 : &obj_arr[p_id - 1];
-	for (l = 0; l < 7; ++l)
+	uint8_t 
+		t = x + y * area_size_x, 
+		t_x = x, 
+		t_y = y, 
+		p_prq = PLAYER.x == t_x && PLAYER.y == t_y;
+	
+	uint8_t 
+		p1 = w_getb(a_x, a_y, t, 0),
+		p2 = w_getb(a_x, a_y, t, 1),
+		p3 = w_getb(a_x, a_y, t, 2);
+	
+	uint8_t
+		layers[4] = 
 	{
-		if (l == player_layer)
+		(p3 & 0x1f),
+		(p3 & 0xe0) >> 5 | (p2 & 0x3) << 2,
+		(p2 & 0x7c) >> 2,
+		(p2 & 0x80) >> 7 | (p1 & 0xf)
+	},
+		pl = (p1 & 0x60) >> 5;
+
+	/*uint8_t t_objs[256];
+	uint8_t o, found = 0;
+	for (o = 0; o < obj_amt; ++o)
+	{		
+		if (obj_arr[o].area_x && obj_arr[o].area_y && obj_arr[o].x && obj_arr[o].y)
 		{
-			for (i = 0; i < mob_amt; ++i)
-			{
-				m = &mob_arr[i];
-				if (m->area_x == a_x && m->area_y == a_y && m->x == t_x && m->y == t_y)
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
-			}
-			if (player_prq)
-				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
-		}
-		else if (w_getb(a_x, a_y, t, _layer) == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[w_getb(a_x, a_y, t, _data_id)]);
-		}
-		else if (o != 0 && o->layer == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[o->data_id]);
-		}
-		else if (p != 0 && p->layer == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[p->data_id]);
+			t_objs[found] = o;
+			found++;
 		}
 	}
+
+	uint8_t t_mobs[256];
+	uint8_t m, found2= 0;
+	for (m = 0; m < mob_amt; ++m)
+	{
+		if (mob_arr[m].area_x && mob_arr[m].area_y && mob_arr[m].x && mob_arr[m].y)
+		{
+			t_mobs[found2] = m;
+			found2++;
+		}
+	}*/
+
+	uint16_t l,o,m;
+	for (l = 0; l < 4; ++l)
+	{
+		if(layers[l] > 0)
+			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[layers[l]]);
+		for (o = 0; o < obj_amt; ++o)
+			if(obj_arr[o].layer == l)
+				if (obj_arr[o].area_x == a_x && obj_arr[o].area_y == a_y && obj_arr[o].x == x && obj_arr[o].y == y)
+					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[obj_arr[o].data_id]);	
+		if (l == pl)
+		{
+			for (m = 0; m < mob_amt; ++m)
+				if (mob_arr[m].area_x  == a_x && mob_arr[m].area_y == a_y && mob_arr[m].x == x && mob_arr[m].y == y)
+					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[mob_arr[m].data_id][mob_arr[m].dir]);
+			if (p_prq)
+				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
+		}
+	}
+		
 }
+
+void draw_area(uint8_t x, uint8_t y)
+{
+	uint8_t t_x, t_y;
+	for (t_y = 0; t_y < area_size_x; ++t_y)
+		for (t_x = 0; t_x < area_size_y; ++t_x)
+			redraw_tile(x, y, t_y, t_x);
+}
+
 void redraw_mob(mob * m)
 {
 	if(m->old_x != m->x || m->old_y != m->y)
@@ -132,7 +129,7 @@ void redraw_mob(mob * m)
 
 int loop()
 {
-	uint8_t event_happened = 0, area_change = 0, speed = 0, i;
+	uint8_t event_happened = 0, area_change = 0, speed = 0, i, p1, blocked;
 	int8_t d;
 	mob * m;
 	while (1) 
@@ -204,7 +201,10 @@ int loop()
 							m->dir = DIR_B;
 						}
 
-						if (w_getb(m->area_x, m->area_y, m->x + m->y*area_size_x, _blocked))
+						p1 = w_getb(m->area_x, m->area_y, m->x + m->y*area_size_x,
+							0);
+						blocked = (p1 & 0x10) >> 4;
+						if (blocked)
 						{
 							m->x = m->old_x;
 							m->y = m->old_y;
@@ -248,7 +248,11 @@ int loop()
 				area_change = 0;
 			}
 
-			if (w_getb(PLAYER.area_x, PLAYER.area_y, PLAYER.x + PLAYER.y*area_size_x, _blocked))
+			
+			p1 = w_getb(PLAYER.area_x, PLAYER.area_y, PLAYER.x + PLAYER.y*area_size_x,
+				0);
+			blocked = (p1 & 0x10) >> 4;
+			if (blocked)
 			{
 				PLAYER.x = PLAYER.old_x;
 				PLAYER.y = PLAYER.old_y;
@@ -295,6 +299,7 @@ int main()
 	print_debug_text();
 	loop();
 	
+	//sprite6(1,1,20, tile_data[trans], 0x1);
 
 	/*sprintf(buffer, "Player Coord:     %d, %d", -1, -1);
 	display_string_xy(buffer, 0, 0);
