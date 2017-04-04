@@ -225,24 +225,21 @@ void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 		}
 }
 
-void blend_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
+void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e)
 {
 	uint16_t x, y, c = 0;
 	for (y = t; y <= t + s - 1; ++y)
 		for (x = l; x <= l + s - 1; ++x, c++)
 		{
-			uint16_t data = 0;
 			write_cmd(COLUMN_ADDRESS_SET);
 			write_data16(x);
 			write_data16(x);
 			write_cmd(PAGE_ADDRESS_SET);
 			write_data16(y);
 			write_data16(y);
-			write_cmd(MEMORY_READ);
-			write_read16(data);
 			write_cmd(MEMORY_WRITE);
 			if (pgm_read_byte(&(col[c])) > 0x00)
-				write_data16(_6to16bit(((pgm_read_byte(&(col[c])) + data) / 2)));
+				write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
 		}
 }
 

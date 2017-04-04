@@ -72,8 +72,7 @@ enum tile_part
 	_layer, 
 	_blocked, 
 	_o_object, 
-	_p_object, 
-	_mob,
+	_p_object,
 	tile_parts,
 };
 
@@ -114,6 +113,7 @@ enum tile_enum {
 	water,
 	sand,
 	roof,
+	grass,
 	tiles,
 };
 
@@ -121,13 +121,13 @@ enum tile_enum {
 
 typedef struct 
 {
-	uint8_t x, y, old_x, old_y, dir, data_id;
-}mob; mob mob_arr[0];
+	uint8_t x, y, old_x, old_y, area_x, area_y, dir, data_id;
+}mob; mob mob_arr[1] = { {3,3,3,3,0,0,front,_player} };
 
 typedef struct 
 {
 	uint8_t comsumed, layer, data_id;
-}object; object obj_arr[1] = { {0,6,null_object} };
+}object; object obj_arr[1] = { {0,1,door_front} };
 
 //typedef struct 
 //{
@@ -143,7 +143,8 @@ area_size_x = 16,
 area_size_y = 11,
 world_size = 1,
 layers = 7,
-player_layer = 3;
+player_layer = 3,
+mob_amt = 1;
 
 uint8_t area_x = 0, area_y = 0;
 uint8_t life = 10, att = 1, str = 1, stm = 1, def = 1, wis = 1, inte = 1;
@@ -153,8 +154,9 @@ char name[6] = "malloc";
 const size_t s = sizeof(char) * 16;
 char * buffer;
 const size_t size_of_tile_parts = tile_parts;
-mob PLAYER = {5,5,5,5,front, _player};
+mob PLAYER = {2,2,2,2,front, _player};
 
+uint8_t mob_speed = 2;
 
 //// header functions ////
 void quick_debug_print(int c)
@@ -174,17 +176,17 @@ inline void store_mob_pos(mob * m)
 uint8_t w[1][176][tile_parts] PROGMEM =
 {
 	{
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,0,1,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 0,1,1,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ sand , 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
-		{ water, 4,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },{ water, 0,0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ roof , 4,0,0,0 },{ roof , 4,0,0,0 },{ roof , 4,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ cobble, 0,1,0,0 },{ cobble, 0,1,0,0 },{ cobble, 0,1,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ cobble, 0,1,0,0 },{ cobble, 0,0,1,0 },{ cobble, 0,1,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
+		{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },{ grass, 0,0,0,0 },
 	},
 };
 
@@ -300,6 +302,28 @@ char tile_data[tiles][400] PROGMEM = {
 		0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,
 		0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,
 		0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,0x20,0x34,0x34,0x24,0x10,
+	},
+	{
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x04, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3c, 0x18, 0x18, 0x18, 0x04, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x04, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x04, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x3c, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x3c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x20, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3c, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x04, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x2c, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18, 0x18, 0x04, 0x18, 0x18, 0x18, 0x2c, 0x18, 0x18, 0x18, 0x18,
+		0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
 	}
 };
 

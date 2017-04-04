@@ -16,10 +16,9 @@ void print_debug_text()
 	display_string_xy(buffer, 0, 0);
 	sprintf(buffer, "Old Player Coord: %d, %d", PLAYER.x, PLAYER.y);
 	display_string_xy(buffer, 0, 8);
-	sprintf(buffer, "Room Coord: %d, %d", area_x, area_y);
+	sprintf(buffer, "Room Coord: %d, %d", PLAYER.area_x, PLAYER.area_y);
 	display_string_xy(buffer, 0, 16);
 }
-
 void print_gui_text()
 {
 	// gui
@@ -46,29 +45,31 @@ void draw_gui()
 	i = tile_size * 15;
 	fill_sprite6(i, j, tile_size, other_data[gui_right]);
 }
-
 void draw_area(uint8_t x, uint8_t y)
 {
-	uint8_t t = 0, t_x, t_y, l, player_prq = 0,
-		m_id, o_id, p_id;
+	uint8_t t = 0, t_x, t_y, l, player_prq = 0, o_id, p_id, i;
 	mob * m;
 	object * o, * p;
 	for (t_y = 0; t_y < area_size_y; ++t_y)
-		for (t_x = 0; t_x < area_size_x; ++t_x, ++t, player_prq = PLAYER.x == t_x && PLAYER.y == t_y)
+		for (t_x = 0; t_x < area_size_x; ++t_x, ++t)
 		{
-			m_id = w_getw(x, y, t, _mob);
+			player_prq = PLAYER.x == t_x && PLAYER.y == t_y;
 			o_id = w_getw(x, y, t, _o_object);
 			p_id = w_getw(x, y, t, _p_object);
-			m = m_id == 0 ? 0 : &mob_arr[m_id - 1];
 			o = o_id == 0 ? 0 : &obj_arr[o_id - 1];
 			p = p_id == 0 ? 0 : &obj_arr[p_id - 1];
 			for (l = 0; l < 7; ++l)
 			{
-				if (player_prq && l == player_layer)
+				if (l == player_layer)
 				{
-					if (m != 0)
-						overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);					
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
+					for (i = 0; i < mob_amt; ++i)
+					{
+						m = &mob_arr[i];
+						if (m->area_x == x && m->area_y == y && m->x == t_x && m->y == t_y)
+							overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
+					}
+					if(player_prq)
+						overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
 				}
 				else if (w_getb(x, y, t, _layer) == l)
 				{
@@ -85,31 +86,32 @@ void draw_area(uint8_t x, uint8_t y)
 			}
 		}
 }
-
-int redraw()
+void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 {
-	mob * m;
 	object * o, *p;
-	//// previous tile ////
-	uint8_t t_x = PLAYER.old_x , t_y = PLAYER.old_y, l, t = t_x + t_y * area_size_x,
-		m_id, o_id, p_id;
-
-	m_id = w_getw(area_x, area_y, t, _mob);
-	o_id = w_getw(area_x, area_y, t, _o_object);
-	p_id = w_getw(area_x, area_y, t, _p_object);
-	m = m_id == 0 ? 0 : &mob_arr[m_id - 1];
+	mob * m;
+	uint8_t t = x + y * area_size_x, t_x = x, t_y = y, l, player_prq = 0, o_id, p_id, i;
+	player_prq = PLAYER.x == t_x && PLAYER.y == t_y;
+	o_id = w_getw(a_x, a_y, t, _o_object);
+	p_id = w_getw(a_x, a_y, t, _p_object);
 	o = o_id == 0 ? 0 : &obj_arr[o_id - 1];
 	p = p_id == 0 ? 0 : &obj_arr[p_id - 1];
 	for (l = 0; l < 7; ++l)
 	{
 		if (l == player_layer)
 		{
-			if (m != 0)
-				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
+			for (i = 0; i < mob_amt; ++i)
+			{
+				m = &mob_arr[i];
+				if (m->area_x == a_x && m->area_y == a_y && m->x == t_x && m->y == t_y)
+					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
+			}
+			if (player_prq)
+				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
 		}
-		else if (w_getb(area_x, area_y, t, _layer) == l)
+		else if (w_getb(a_x, a_y, t, _layer) == l)
 		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[w_getb(area_x, area_y, t, _data_id)]);
+			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[w_getb(a_x, a_y, t, _data_id)]);
 		}
 		else if (o != 0 && o->layer == l)
 		{
@@ -120,49 +122,19 @@ int redraw()
 			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[p->data_id]);
 		}
 	}
-
-	//// current tile //// 
-	t_x = PLAYER.x;
-	t_y = PLAYER.y;
-	t = t_x + t_y * area_size_x;
-	m_id = w_getw(area_x, area_y, t, _mob);
-	o_id = w_getw(area_x, area_y, t, _o_object);
-	p_id = w_getw(area_x, area_y, t, _p_object);
-	m = m_id == 0 ? 0 : &mob_arr[m_id - 1];
-	o = o_id == 0 ? 0 : &obj_arr[o_id - 1];
-	p = p_id == 0 ? 0 : &obj_arr[p_id - 1];
-	for (l = 0; l < 7; ++l)
-	{
-		if (l == player_layer) 
-		{
-			if (m != 0)
-				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[m->data_id][m->dir]);
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
-		}
-		else if (w_getb(area_x, area_y, t, _layer) == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[w_getb(area_x, area_y, t, _data_id)]);
-		}
-		else if (o != 0 && o->layer == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[o->data_id]);
-		}
-		else if (p != 0 && p->layer == l)
-		{
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[p->data_id]);
-		}
-	}
-
-	//// other ////
-	print_gui_text();
-	print_debug_text();
-
-	return 1;
+}
+void redraw_mob(mob * m)
+{
+	if(m->old_x != m->x || m->old_y != m->y)
+		redraw_tile(m->area_x, m->area_y, m->old_x, m->old_y);
+	redraw_tile(m->area_x, m->area_y, m->x, m->y);
 }
 
 int loop()
 {
-	uint8_t event_happened = 0, area_change = 0;
+	uint8_t event_happened = 0, area_change = 0, speed = 0, i;
+	int8_t d;
+	mob * m;
 	while (1) 
 	{
 		_delay_ms(50);
@@ -198,51 +170,97 @@ int loop()
 		{
 			draw_area(area_x, area_y);
 			draw_gui();
-			redraw();
 		}
 		if (event_happened)
 		{
+			if(!(speed %mob_speed))
+				for (i = 0; i < mob_amt; ++i)
+				{
+					m = &mob_arr[i];
+					if (m->area_x == PLAYER.area_x && m->area_y == PLAYER.area_y)
+					{
+						store_mob_pos(m);
+						d = PLAYER.old_x - m->x;
+						if (d > 0)
+						{
+							m->x++;
+							m->dir = DIR_R;
+						}
+						if (d < 0)
+						{
+							m->x--;
+							m->dir = DIR_L;
+						}
+
+						d = PLAYER.old_y - m->y;
+						if (d > 0)
+						{
+							m->y++;
+							m->dir = DIR_F;
+						}
+						if (d < 0)
+						{
+							m->y--;
+							m->dir = DIR_B;
+						}
+
+						if (w_getb(m->area_x, m->area_y, m->x + m->y*area_size_x, _blocked))
+						{
+							m->x = m->old_x;
+							m->y = m->old_y;
+						}
+						else
+						{
+							redraw_mob(m);
+						}
+					}
+				}
+			speed = (speed + 1) % mob_speed;
+
 			if (PLAYER.x > 15)
 			{
 				PLAYER.x = 0;
-				area_x++;
+				PLAYER.area_x++;
 				area_change = 1;
 			}
 			if (PLAYER.x < 0)
 			{
 				PLAYER.x = 15;
-				area_x--;
+				PLAYER.area_x--;
 				area_change = 1;
 			}
 			if (PLAYER.y > 10)
 			{
 				PLAYER.y = 0;
-				area_y++;
+				PLAYER.area_y++;
 				area_change = 1;
 			}
 			if (PLAYER.y < 0)
 			{
 				PLAYER.y = 10;
-				area_y--;
+				PLAYER.area_y--;
 				area_change = 1;
 			}
 			if (area_change)
 			{
-				draw_area(area_x, area_y);
-				draw_gui();
-				redraw();
+				draw_area(PLAYER.area_x, PLAYER.area_y);
+				draw_gui();			
 				area_change = 0;
 			}
 
-			if (w_getb(area_x, area_y, PLAYER.x + PLAYER.y*area_size_x, _blocked))
+			if (w_getb(PLAYER.area_x, PLAYER.area_y, PLAYER.x + PLAYER.y*area_size_x, _blocked))
 			{
 				PLAYER.x = PLAYER.old_x;
 				PLAYER.y = PLAYER.old_y;
 			}
 			else
 			{
-				redraw();
+				redraw_mob(&PLAYER);
 			}
+
+			//// other ////
+			print_gui_text();
+			print_debug_text();
 			event_happened = 0;
 		}
 	}
@@ -272,7 +290,7 @@ int main()
 	OCR3A = 0;
 
 	buffer = malloc(s);	
-	draw_area(area_x,area_y);
+	draw_area(PLAYER.area_x, PLAYER.area_y);
 	draw_gui();
 	print_debug_text();
 	loop();
