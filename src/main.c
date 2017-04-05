@@ -99,7 +99,7 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 		for (o = 0; o < obj_amt; ++o)
 			if(obj_arr[o].layer == l)
 				if (obj_arr[o].area_x == a_x && obj_arr[o].area_y == a_y && obj_arr[o].x == x && obj_arr[o].y == y)
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_display_data[obj_arr[o].data_id]);	
+					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_data[obj_arr[o].data_id]);	
 		if (l == pl)
 		{
 			for (m = 0; m < mob_amt; ++m)
@@ -294,13 +294,25 @@ int main()
 	OCR3A = 0;
 
 	buffer = malloc(s);	
-	draw_area(PLAYER.area_x, PLAYER.area_y);
-	draw_gui();
-	print_debug_text();
-	loop();
+	//draw_area(PLAYER.area_x, PLAYER.area_y);
+	//draw_gui();
+	//print_debug_text();
+	//loop();
 	
-	//sprite6(1,1,20, tile_data[trans], 0x1);
-
+	int i;
+	for (i = 0; i < masks; i++)
+	{
+		mask_sprite6(1 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROTCW);
+		mask_sprite6(2 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROT180);
+		mask_sprite6(3 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROTCCW);
+		mask_sprite6(4 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], VERT_FLIP);
+		mask_sprite6(5 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], HORI_FLIP);
+		mask_sprite6(7 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROTCW | INVERT);
+		mask_sprite6(8 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROT180 | INVERT);
+		mask_sprite6(9 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROTCCW | INVERT);
+		mask_sprite6(10 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], VERT_FLIP | INVERT);
+		mask_sprite6(11 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], HORI_FLIP | INVERT);
+	}
 	/*sprintf(buffer, "Player Coord:     %d, %d", -1, -1);
 	display_string_xy(buffer, 0, 0);
 	sprintf(buffer, "Old Player Coord: %d, %d", -1, -1);

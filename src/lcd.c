@@ -18,11 +18,6 @@
 
 lcd display;
 
-inline uint16_t _4to16bit(uint16_t c)
-{
-	return ((c & 3) << R_16) | ((c & 1) << G_16) | (c & 3);
-}
-
 inline uint16_t _6to16bit(char c)
 {
 	return (c & 48) << 10 | (c & 12) << 7 | (c & 3) << 3 | 0x39E7;
@@ -225,37 +220,45 @@ void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 		}
 }
 
-void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e)
+void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, char * mask, uint8_t u)
 {
-	uint16_t
-		i_1 = 0, i_2 = 0, 
-		e_1 = 0, e_2 = 0, 
-		x = 0, y = 0, 
-		_1 = 0, _2 = 0, 
-		c = 0;
+	s--;
+	uint8_t color,
+		v_f = (u & VERT_FLIP),
+		h_f = (u & HORI_FLIP),
+		rot = (u & ROTATIONS),
+		inv = (u & INVERT);
 
-	if (e == 0x0)
-	{
-		i_1 = t;
-		i_2 = l;
-		e_1 = t + s - 1;
-		e_2 = l + s - 1;
-		_1 = 1;
-		_2 = 1;
-	}
-	else if ((e & 0x1) == 0x1)
-	{
-		i_1 = t;
-		i_2 = l + s - 1;
-		e_1 = t + s - 1;
-		e_2 = l;
-		_1 = 1;
-		_2 = -1;
-	}
+	int16_t
+		x, y, c = 0, m_x, m_y, mc_x = 0, mc_y = 0;
 
-	for (y = i_1; y <= e_1; y += _1)
-		for (x = i_2; x <= e_2; x += _2, c++)
+	for (y = t; y <= t + s; ++y, ++mc_y, mc_x = 0)
+		for (x = l; x <= l + s; ++x, ++mc_x, c++)
 		{
+			m_x = mc_x;
+			m_y = mc_y;
+			
+			if(rot == ROTCCW)
+			{
+				m_x = -mc_y + s;
+				m_y = mc_x;
+			}
+			else if (rot == ROT180)
+			{
+				m_x = -mc_x + s;
+				m_y = -mc_y + s;
+			}
+			else if (rot == ROTCW)
+			{
+				m_x = mc_y;
+				m_y = -mc_x + s;
+			}
+
+			if (h_f == HORI_FLIP)
+				m_y = -m_y + s;
+			if (v_f == VERT_FLIP)
+				m_x = -m_x + s;
+
 			write_cmd(COLUMN_ADDRESS_SET);
 			write_data16(x);
 			write_data16(x);
@@ -263,8 +266,10 @@ void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e)
 			write_data16(y);
 			write_data16(y);
 			write_cmd(MEMORY_WRITE);
-			if (pgm_read_byte(&(col[c])) > 0x00)
-				write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
+			if ((color = pgm_read_byte(&(col[c]))) != 0x00)
+				if ((pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) != 0x00 && inv != INVERT) ||
+					(pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) == 0x00 && inv == INVERT))
+					write_data16(_6to16bit(color));			
 		}
 }
 
