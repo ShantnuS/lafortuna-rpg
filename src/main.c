@@ -19,17 +19,88 @@ void print_debug_text()
 	sprintf(buffer, "Room Coord: %d, %d", PLAYER.area_x, PLAYER.area_y);
 	display_string_xy(buffer, 0, 16);
 }
+
 void print_gui_text()
 {
 	// gui
-	display.foreground = YELLOW;
+	display.foreground = GREEN;
 	sprintf(buffer, "%-6s", name);
 	display_string_xy(buffer, 3, tile_size * 11 + 2);
 	display.foreground = WHITE;
 	sprintf(buffer, "|Life:%-3i|XP:%-4i|%-4ic|Lv%-2i", life, xp, money, level);
 	display_string_xy(buffer, 50, tile_size * 11 + 2);
-	sprintf(buffer, "Stats|Att:%-2i|Str:%-2i|Stm:%-2i|Def:%-2i|Wis:%-2i|Int:%-2i", att, str, stm, def, wis, inte);
-	display_string_xy(buffer, 3, tile_size * 11 + 10);
+}
+
+void draw_combat_screen(mob * m)
+{
+	uint8_t redraw = 0;
+	char attack[10] = "clobber", other[10] = "run", arrow[2] = "->";
+	clear_screen();
+	while (1)
+	{
+		_delay_ms(50);
+
+		if (redraw)
+		{
+			display.foreground = GREEN;
+			sprintf(buffer, "%-8s = lvl %i", PLAYER.name, PLAYER.lvl);
+			display_string_xy(buffer, 0, 0);
+			display.foreground = WHITE;
+			sprintf(buffer, "    STATS = str %i|stm %i|wis %i|int %i", PLAYER.str, PLAYER.stm, PLAYER.wis, PLAYER.intt);
+			display_string_xy(buffer, 0, 1 * 8);
+
+			display.foreground = RED;
+			sprintf(buffer, "%-8s = lvl %i", m->name, m->lvl);
+			display_string_xy(buffer, 0, 3 * 8);
+			display.foreground = WHITE;
+			sprintf(buffer, "    STATS = str %i|stm %i|wis %i|int %i", m->str, m->stm, m->wis, m->intt);
+			display_string_xy(buffer, 0, 4 * 8);
+
+			display.foreground = GREEN;
+			sprintf(buffer, "LIFE %-3i | ENERGY %-3i", PLAYER.life, PLAYER.mana);
+			display_string_xy(buffer, 0, 6 * 8);
+			display.foreground = RED;
+			sprintf(buffer, "LIFE %-3i | ENERGY %-3i", m->life, m->mana);
+			display_string_xy(buffer, 0, 7 * 8);
+
+			display.foreground = YELLOW;
+			sprintf(buffer, "-> ");
+			display_string_xy(buffer, 0, 9 * 8);
+
+			display.foreground = WHITE;
+			sprintf(buffer, "   ATTACK      OTHER");
+			display_string_xy(buffer, 0, 11 * 8);
+			display.foreground = WHITE;
+			//sprintf(buffer, "%-3s%-8s% %-3s%-8s", arrow, attack, arrow, other);
+			display_string_xy(buffer, 0, 12 * 8);
+
+			redraw = 0;
+		}
+
+		if (down_pressed())
+		{
+			redraw = 1;
+		}
+		if (up_pressed())
+		{
+			redraw = 1;
+		}
+		if (left_pressed())
+		{
+			redraw = 1;
+		}
+		if (right_pressed())
+		{
+			redraw = 1;
+		}
+		if (center_pressed())
+		{
+			break;
+		}
+
+
+		
+	}
 }
 
 void draw_gui()
@@ -54,62 +125,59 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 		t_y = y, 
 		p_prq = PLAYER.x == t_x && PLAYER.y == t_y;
 	
-	uint8_t 
+	uint8_t
 		p1 = w_getb(a_x, a_y, t, 0),
-		p2 = w_getb(a_x, a_y, t, 1),
-		p3 = w_getb(a_x, a_y, t, 2);
+		p2 = w_getb(a_x, a_y, t, 1);
+		//p3 = w_getb(a_x, a_y, t, 2);
 	
+	//     ot opt op o
+
+	// 
 	uint8_t
 		layers[4] = 
 	{
-		(p3 & 0x1f),
-		(p3 & 0xe0) >> 5 | (p2 & 0x3) << 2,
-		(p2 & 0x7c) >> 2,
-		(p2 & 0x80) >> 7 | (p1 & 0xf)
-	},
-		pl = (p1 & 0x60) >> 5;
-
-	/*uint8_t t_objs[256];
-	uint8_t o, found = 0;
-	for (o = 0; o < obj_amt; ++o)
-	{		
-		if (obj_arr[o].area_x && obj_arr[o].area_y && obj_arr[o].x && obj_arr[o].y)
-		{
-			t_objs[found] = o;
-			found++;
-		}
-	}
-
-	uint8_t t_mobs[256];
-	uint8_t m, found2= 0;
-	for (m = 0; m < mob_amt; ++m)
+		(p2 & 0xf),
+		(p2 & 0xf0) >> 4,
+		0,
+		0
+	}, 
+		mask[4] =
 	{
-		if (mob_arr[m].area_x && mob_arr[m].area_y && mob_arr[m].x && mob_arr[m].y)
-		{
-			t_mobs[found2] = m;
-			found2++;
-		}
-	}*/
+		0,
+		(p2 & 0x3f),
+		0,
+		0
+	},
+		pl = (p1 & 0x40);
 
 	uint16_t l,o,m;
 	for (l = 0; l < 4; ++l)
 	{
-		if(layers[l] > 0)
-			overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[layers[l]]);
-		for (o = 0; o < obj_amt; ++o)
-			if(obj_arr[o].layer == l)
+		for (o = 0; o < UNIQUE_OBJECTS; ++o)
+			if (obj_arr[o].layer == l)
 				if (obj_arr[o].area_x == a_x && obj_arr[o].area_y == a_y && obj_arr[o].x == x && obj_arr[o].y == y)
-					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_data[obj_arr[o].data_id]);	
-		if (l == pl)
+					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, object_data[obj_arr[o].data_id]);
+		if (pl && l == 1 || !pl && l == 2)
 		{
-			for (m = 0; m < mob_amt; ++m)
-				if (mob_arr[m].area_x  == a_x && mob_arr[m].area_y == a_y && mob_arr[m].x == x && mob_arr[m].y == y)
+			for (m = 0; m < UNIQUE_MOBS; ++m)
+				if (mob_arr[m].area_x == a_x && mob_arr[m].area_y == a_y && mob_arr[m].x == x && mob_arr[m].y == y)
 					overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[mob_arr[m].data_id][mob_arr[m].dir]);
 			if (p_prq)
 				overlay_sprite6(t_x * tile_size, t_y * tile_size, tile_size, mob_data[PLAYER.data_id][PLAYER.dir]);
 		}
+		if(layers[l] != 0)
+			if (l == 0)
+			{
+				fill_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[layers[l]]);
+
+			}
+			else if (l == 1)
+			{
+				mask_sprite6(t_x * tile_size, t_y * tile_size, tile_size, tile_data[layers[l]], mask_data[(mask[l] & 0x7)], mask[l]);
+			}
 	}
-		
+
+	
 }
 
 void draw_area(uint8_t x, uint8_t y)
@@ -122,15 +190,16 @@ void draw_area(uint8_t x, uint8_t y)
 
 void redraw_mob(mob * m)
 {
+	uint8_t s_x = 0, s_y = 0;
 	if(m->old_x != m->x || m->old_y != m->y)
-		redraw_tile(m->area_x, m->area_y, m->old_x, m->old_y);
-	redraw_tile(m->area_x, m->area_y, m->x, m->y);
+		redraw_tile(m->area_x, m->area_y, m->old_x + s_x, m->old_y + s_y);
+	redraw_tile(m->area_x, m->area_y, m->x + s_x, m->y + s_y);
 }
 
 int loop()
 {
 	uint8_t event_happened = 0, area_change = 0, speed = 0, i, p1, blocked;
-	int8_t d;
+	int8_t d, md;
 	mob * m;
 	while (1) 
 	{
@@ -167,17 +236,20 @@ int loop()
 		{
 			draw_area(area_x, area_y);
 			draw_gui();
+			print_gui_text();
+			print_debug_text();
 		}
 		if (event_happened)
 		{
 			if(!(speed %mob_speed))
-				for (i = 0; i < mob_amt; ++i)
+				for (i = 0; i < UNIQUE_MOBS; ++i)
 				{
 					m = &mob_arr[i];
 					if (m->area_x == PLAYER.area_x && m->area_y == PLAYER.area_y)
 					{
 						store_mob_pos(m);
 						d = PLAYER.old_x - m->x;
+						md = d;
 						if (d > 0)
 						{
 							m->x++;
@@ -190,6 +262,7 @@ int loop()
 						}
 
 						d = PLAYER.old_y - m->y;
+						md += d;
 						if (d > 0)
 						{
 							m->y++;
@@ -203,7 +276,7 @@ int loop()
 
 						p1 = w_getb(m->area_x, m->area_y, m->x + m->y*area_size_x,
 							0);
-						blocked = (p1 & 0x10) >> 4;
+						blocked = (p1 & 0x80) == 0x80;
 						if (blocked)
 						{
 							m->x = m->old_x;
@@ -213,6 +286,9 @@ int loop()
 						{
 							redraw_mob(m);
 						}
+
+						if (md <= 1)
+							draw_combat_screen(m);
 					}
 				}
 			speed = (speed + 1) % mob_speed;
@@ -247,11 +323,10 @@ int loop()
 				draw_gui();			
 				area_change = 0;
 			}
-
 			
 			p1 = w_getb(PLAYER.area_x, PLAYER.area_y, PLAYER.x + PLAYER.y*area_size_x,
 				0);
-			blocked = (p1 & 0x10) >> 4;
+			blocked = (p1 & 0x80) == 0x80;
 			if (blocked)
 			{
 				PLAYER.x = PLAYER.old_x;
@@ -263,8 +338,8 @@ int loop()
 			}
 
 			//// other ////
-			print_gui_text();
-			print_debug_text();
+			//print_gui_text();
+			//print_debug_text();
 			event_happened = 0;
 		}
 	}
@@ -293,26 +368,29 @@ int main()
 
 	OCR3A = 0;
 
+	display.background = BLACK;
+
 	buffer = malloc(s);	
-	//draw_area(PLAYER.area_x, PLAYER.area_y);
-	//draw_gui();
+
+	draw_area(PLAYER.area_x, PLAYER.area_y);
+	draw_gui();
 	//print_debug_text();
-	//loop();
+	loop();
 	
-	int i;
+	/*uint8_t i;
 	for (i = 0; i < masks; i++)
 	{
-		mask_sprite6(1 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROTCW);
-		mask_sprite6(2 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROT180);
-		mask_sprite6(3 * tile_size, i* tile_size, tile_size, tile_data[water], mask_data[i], ROTCCW);
-		mask_sprite6(4 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], VERT_FLIP);
-		mask_sprite6(5 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], HORI_FLIP);
-		mask_sprite6(7 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROTCW | INVERT);
-		mask_sprite6(8 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROT180 | INVERT);
-		mask_sprite6(9 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], ROTCCW | INVERT);
-		mask_sprite6(10 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], VERT_FLIP | INVERT);
-		mask_sprite6(11 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], HORI_FLIP | INVERT);
-	}
+		mask_sprite6(1 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], 0);
+		mask_sprite6(2 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i);
+		mask_sprite6(3 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | VERT_FLIP);
+		mask_sprite6(4 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | HORI_FLIP);
+		mask_sprite6(5 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | VERT_FLIP | HORI_FLIP);
+		mask_sprite6(6 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | HORI_FLIP | VERT_FLIP);
+		mask_sprite6(7 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | VERT_FLIP | INVERT);
+		mask_sprite6(8 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | HORI_FLIP | INVERT);
+		mask_sprite6(9 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | VERT_FLIP | HORI_FLIP | INVERT);
+		mask_sprite6(10 * tile_size, i * tile_size, tile_size, tile_data[water], mask_data[i], i | HORI_FLIP | VERT_FLIP | INVERT);
+	}*/
 	/*sprintf(buffer, "Player Coord:     %d, %d", -1, -1);
 	display_string_xy(buffer, 0, 0);
 	sprintf(buffer, "Old Player Coord: %d, %d", -1, -1);

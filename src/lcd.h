@@ -22,11 +22,13 @@
 
 #define VERT_FLIP 0x8
 #define HORI_FLIP 0x10
-#define ROTATIONS 0x60
-#define ROTCW 0x20
-#define ROTCCW 0x40
-#define ROT180 0x60
-#define INVERT 0x80
+#define INVERT 0x20
+#define MASKID 0x7
+//#define ROTATIONS 0x60
+//#define ROTCW 0x20
+//#define ROTCCW 0x40
+//#define ROT180 0x60
+//#define INVERT 0x80
 
 
 typedef enum {North, West, South, East} orientation;
@@ -58,7 +60,7 @@ void display_string_xy(char *str, uint16_t x, uint16_t y);
 void display_register(uint8_t reg);
 
 void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
-void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
+void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col);
 void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, char * mask, uint8_t u);
 
 inline uint16_t _6to16bit(char c);

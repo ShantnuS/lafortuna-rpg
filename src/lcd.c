@@ -204,10 +204,12 @@ void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col)
 
 void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 {
-	uint16_t x , y , c = 0;
-	for (y = t; y <= t + s - 1; ++y)
-		for (x = l; x <= l + s - 1; ++x, c++)
+	s--;
+	uint16_t x , y , c = 0, color;
+	for (y = t; y <= t + s; y += 1)
+		for (x = l; x <= l + s; x += 1, c++)
 		{
+			color = pgm_read_byte(&(col[c]));
 			write_cmd(COLUMN_ADDRESS_SET);
 			write_data16(x);
 			write_data16(x);
@@ -215,8 +217,8 @@ void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
 			write_data16(y);
 			write_data16(y);
 			write_cmd(MEMORY_WRITE);
-			if (pgm_read_byte(&(col[c])) > 0x00)
-				write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
+			if (color > 0x00)
+				write_data16(_6to16bit(color));
 		}
 }
 
@@ -226,8 +228,8 @@ void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, char * mask, u
 	uint8_t color,
 		v_f = (u & VERT_FLIP),
 		h_f = (u & HORI_FLIP),
-		rot = (u & ROTATIONS),
-		inv = (u & INVERT);
+		inv = (u & INVERT),
+		ove = (u & MASKID) == 0;
 
 	int16_t
 		x, y, c = 0, m_x, m_y, mc_x = 0, mc_y = 0;
@@ -237,28 +239,10 @@ void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, char * mask, u
 		{
 			m_x = mc_x;
 			m_y = mc_y;
-			
-			if(rot == ROTCCW)
-			{
-				m_x = -mc_y + s;
-				m_y = mc_x;
-			}
-			else if (rot == ROT180)
-			{
-				m_x = -mc_x + s;
-				m_y = -mc_y + s;
-			}
-			else if (rot == ROTCW)
-			{
-				m_x = mc_y;
-				m_y = -mc_x + s;
-			}
-
 			if (h_f == HORI_FLIP)
-				m_y = -m_y + s;
+				m_y = -mc_y + s;
 			if (v_f == VERT_FLIP)
-				m_x = -m_x + s;
-
+				m_x = -mc_x + s;
 			write_cmd(COLUMN_ADDRESS_SET);
 			write_data16(x);
 			write_data16(x);
@@ -267,7 +251,8 @@ void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, char * mask, u
 			write_data16(y);
 			write_cmd(MEMORY_WRITE);
 			if ((color = pgm_read_byte(&(col[c]))) != 0x00)
-				if ((pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) != 0x00 && inv != INVERT) ||
+				if (ove || 
+					(pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) != 0x00 && inv != INVERT) ||
 					(pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) == 0x00 && inv == INVERT))
 					write_data16(_6to16bit(color));			
 		}
@@ -351,3 +336,18 @@ void display_register(uint8_t reg)
 	}
 }
 
+/*			if(rot == ROTCCW)
+			{
+				m_x = -mc_y + s;
+				m_y = mc_x;
+			}
+			else if (rot == ROT180)
+			{
+				m_x = -mc_x + s;
+				m_y = -mc_y + s;
+			}
+			else if (rot == ROTCW)
+			{
+				m_x = mc_y;
+				m_y = -mc_x + s;
+				}*/
