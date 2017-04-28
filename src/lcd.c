@@ -18,16 +18,6 @@
 
 lcd display;
 
-inline uint16_t _4to16bit(uint16_t c)
-{
-	return ((c & 3) << R_16) | ((c & 1) << G_16) | (c & 3);
-}
-
-inline uint16_t _6to16bit(char c)
-{
-	return (c & 48) << 10 | (c & 12) << 7 | (c & 3) << 3 | 0x39E7;
-}
-
 void init_lcd()
 {
     /* Enable extended memory interface with 10 bit addressing */
@@ -193,56 +183,6 @@ void fill_rectangle_indexed(rectangle r, uint16_t* col)
 			write_data16(*col++);
 }
 
-void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col)
-{
-	uint16_t c = 0;
-	write_cmd(COLUMN_ADDRESS_SET);
-	write_data16(l);
-	write_data16(l + s - 1);
-	write_cmd(PAGE_ADDRESS_SET);
-	write_data16(t);
-	write_data16(t + s - 1);
-	write_cmd(MEMORY_WRITE);
-	for (c = 0; c < s * s; c++)
-		write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
-}
-
-void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col)
-{
-	uint16_t x , y , c = 0;
-	for (y = t; y <= t + s - 1; ++y)
-		for (x = l; x <= l + s - 1; ++x, c++)
-		{
-			write_cmd(COLUMN_ADDRESS_SET);
-			write_data16(x);
-			write_data16(x);
-			write_cmd(PAGE_ADDRESS_SET);
-			write_data16(y);
-			write_data16(y);
-			write_cmd(MEMORY_WRITE);
-			if (pgm_read_byte(&(col[c])) > 0x00)
-				write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
-		}
-}
-
-void sprite6(uint16_t l, uint16_t t, uint16_t s, char * col, uint8_t e)
-{
-	uint16_t x, y, c = 0;
-	for (y = t; y <= t + s - 1; ++y)
-		for (x = l; x <= l + s - 1; ++x, c++)
-		{
-			write_cmd(COLUMN_ADDRESS_SET);
-			write_data16(x);
-			write_data16(x);
-			write_cmd(PAGE_ADDRESS_SET);
-			write_data16(y);
-			write_data16(y);
-			write_cmd(MEMORY_WRITE);
-			if (pgm_read_byte(&(col[c])) > 0x00)
-				write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
-		}
-}
-
 void clear_screen()
 {
     display.x = 0;
@@ -319,5 +259,218 @@ void display_register(uint8_t reg)
 			display_char( '.' );
 		}
 	}
+}
+
+/* extra functions */
+
+inline uint16_t _6to16bit(uint8_t c)
+{
+	return (c & 0x30) << 10 | (c & 0xc) << 7 | (c & 0x3) << 3 | 0x39E7;
+}
+
+inline uint8_t get_color(uint16_t n, uint8_t * col)
+{
+	uint16_t t = 0, count = n * 6, ptr = count % 8;
+	n = count / 8.0f;
+	t = (pgm_read_byte(&(col[n])) & (0x3f << ptr)) >> ptr;
+	if (ptr > 2)
+		t |= (pgm_read_byte(&(col[n + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+	return t;
+}
+
+void fill_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t* col)
+{
+	uint16_t c = 0;
+	write_cmd(COLUMN_ADDRESS_SET);
+	write_data16(l);
+	write_data16(l + s - 1);
+	write_cmd(PAGE_ADDRESS_SET);
+	write_data16(t);
+	write_data16(t + s - 1);
+	write_cmd(MEMORY_WRITE);
+	for (c = 0; c < s * s; c++)
+		write_data16(_6to16bit(pgm_read_byte(&(col[c]))));
+}
+void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t* col)
+{
+	uint16_t c = 0, count, ptr, color, temp;
+	write_cmd(COLUMN_ADDRESS_SET);
+	write_data16(l);
+	write_data16(l + s - 1);
+	write_cmd(PAGE_ADDRESS_SET);
+	write_data16(t);
+	write_data16(t + s - 1);
+	write_cmd(MEMORY_WRITE);
+	for (c = 0; c < s * s; c++)
+	{		
+		count = c * 6;
+		ptr = count % 8;
+		temp = count / 8;
+		color = (pgm_read_byte(&(col[temp])) & (0x3f << ptr)) >> ptr;
+		if (ptr > 2)
+			color |= (pgm_read_byte(&(col[temp + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+		write_data16(_6to16bit(color));
+	}
+}
+void fill_sprite6_scaled(uint16_t l, uint16_t t, uint16_t s, uint8_t* col, uint16_t scale)
+{
+	s--;
+	uint16_t x, y, c = 0, color, count, ptr, temp, x1 = 0, y1 = 0;
+	for (y = t; y <= t + s; y++)
+		for (x = l; x <= l + s; x++, c++)
+		{
+			count = c * 6;
+			ptr = count % 8;
+			temp = count / 8;
+			color = (pgm_read_byte(&(col[temp])) & (0x3f << ptr)) >> ptr;
+			if (ptr > 2)
+				color |= (pgm_read_byte(&(col[temp + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+
+			for (y1 = 0; y1 < scale; ++y1)
+				for (x1 = 0; x1 < scale; ++x1)
+				{
+					write_cmd(COLUMN_ADDRESS_SET);
+					write_data16(x*scale + x1);
+					write_data16(x*scale + x1);
+					write_cmd(PAGE_ADDRESS_SET);
+					write_data16(y*scale + y1);
+					write_data16(y*scale + y1);
+					write_cmd(MEMORY_WRITE);					
+					write_data16(_6to16bit(color));
+				}
+		}
+}
+
+void overlay_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t * col)
+{
+	s--;
+	uint16_t x, y, c = 0, color;
+	for (y = t; y <= t + s; y += 1)
+		for (x = l; x <= l + s; x += 1, c++)
+		{
+			color = pgm_read_byte(&(col[c]));
+			write_cmd(COLUMN_ADDRESS_SET);
+			write_data16(x);
+			write_data16(x);
+			write_cmd(PAGE_ADDRESS_SET);
+			write_data16(y);
+			write_data16(y);
+			write_cmd(MEMORY_WRITE);
+			if (color > 0x00)
+				write_data16(_6to16bit(color));
+		}
+}
+void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t * col)
+{
+	s--;
+	uint16_t x, y, c = 0, color, count, ptr, temp;
+	for (y = t; y <= t + s; y++)
+		for (x = l; x <= l + s; x++, c++)
+		{
+			write_cmd(COLUMN_ADDRESS_SET);
+			write_data16(x);
+			write_data16(x);
+			write_cmd(PAGE_ADDRESS_SET);
+			write_data16(y);
+			write_data16(y);
+			write_cmd(MEMORY_WRITE);
+			count = c * 6;
+			ptr = count % 8;
+			temp = count / 8;
+			color = (pgm_read_byte(&(col[temp])) & (0x3f << ptr)) >> ptr;
+			if (ptr > 2)
+				color |= (pgm_read_byte(&(col[temp + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+			if (color != 0x00)
+				write_data16(_6to16bit(color));
+		}
+}
+
+void mask_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t * col, uint8_t * mask, uint8_t u)
+{
+	s--;
+	uint8_t color,
+		v_f = (u & VERT_FLIP),
+		h_f = (u & HORI_FLIP),
+		inv = (u & INVERT),
+		ove = (u & MASKID) == 0;
+
+	int16_t
+		x, y, c = 0, m_x, m_y, mc_x = 0, mc_y = 0;
+
+	for (y = t; y <= t + s; ++y, ++mc_y, mc_x = 0)
+		for (x = l; x <= l + s; ++x, ++mc_x, c++)
+		{
+			m_x = mc_x;
+			m_y = mc_y;
+			if (h_f == HORI_FLIP)
+				m_y = -mc_y + s;
+			if (v_f == VERT_FLIP)
+				m_x = -mc_x + s;
+			write_cmd(COLUMN_ADDRESS_SET);
+			write_data16(x);
+			write_data16(x);
+			write_cmd(PAGE_ADDRESS_SET);
+			write_data16(y);
+			write_data16(y);
+			write_cmd(MEMORY_WRITE);
+			if ((color = pgm_read_byte(&(col[c]))) != 0x00)
+				if (ove ||
+					(pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) != 0x00 && inv != INVERT) ||
+					(pgm_read_byte(&(mask[m_x + m_y * (s + 1)])) == 0x00 && inv == INVERT))
+					write_data16(_6to16bit(color));
+		}
+}
+void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t * col, uint8_t * mask, uint8_t u)
+{
+	s--;
+	uint8_t
+		v_f = (u & VERT_FLIP),
+		h_f = (u & HORI_FLIP),
+		inv = (u & INVERT),
+		ove = (u & MASKID) == 0;
+
+	int16_t
+		x, y, c = 0, m_x, m_y, mc_x = 0, mc_y = 0, count, ptr, color, temp, m;
+
+	for (y = t; y <= t + s; ++y, ++mc_y, mc_x = 0)
+		for (x = l; x <= l + s; ++x, ++mc_x, c++)
+		{
+			count = c * 6;
+			ptr = count % 8;
+			temp = count / 8;
+			color = (pgm_read_byte(&(col[temp])) & (0x3f << ptr)) >> ptr;
+			if (ptr > 2)
+				color |= (pgm_read_byte(&(col[temp + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+			if (color != 0x00)
+			{
+				m_x = mc_x;
+				m_y = mc_y;
+				if (h_f == HORI_FLIP)
+					m_y = -mc_y + s;
+				if (v_f == VERT_FLIP)
+					m_x = -mc_x + s;
+
+				count = m_x + m_y * (s + 1) * 6;
+				ptr = count % 8;
+				temp = count / 8;
+				m = (pgm_read_byte(&(mask[temp])) & (0x3f << ptr)) >> ptr;
+				if (ptr > 2)
+					m |= (pgm_read_byte(&(mask[temp + 1])) & (0x3f >> (8 - ptr))) << (8 - ptr);
+
+				if (ove ||
+					(m != 0x00 && inv != INVERT) ||
+					(m == 0x00 && inv == INVERT))
+				{
+					write_cmd(COLUMN_ADDRESS_SET);
+					write_data16(x);
+					write_data16(x);
+					write_cmd(PAGE_ADDRESS_SET);
+					write_data16(y);
+					write_data16(y);
+					write_cmd(MEMORY_WRITE);
+					write_data16(_6to16bit(color));
+				}
+			}
+		}
 }
 

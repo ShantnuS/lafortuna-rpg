@@ -48,4 +48,4 @@ clean:
 
 .PHONY:erase
 erase:
-	@$(DFU) $(BOARD) erase --force
+	@$(DFU) $(BOARD) erase -force
