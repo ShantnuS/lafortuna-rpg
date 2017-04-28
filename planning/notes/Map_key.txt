@@ -1,0 +1,20 @@
+----COLOUR OF BOXES----
+Orange = Village
+Dark Green = Trees
+Light Green = Open Fields
+Grey = Mountains
+Black = Evil Areas
+Turqoise = Inside houses
+Cyan = Inside houses
+Pink = Caves
+Teal = Caves
+Dark Blue = Caves
+
+----LINES----
+Grey Lines = Paths between tiles
+
+----DOTS----
+Red = Mobs
+Gold Yellow = NPC
+Turqoise = House Entrance
+Dark Blue = Cave Entrance
