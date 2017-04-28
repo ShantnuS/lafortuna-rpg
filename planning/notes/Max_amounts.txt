@@ -1,0 +1,7 @@
+32 Tiles
+32 Items
+32 Objects
+32 NPCs
+
+3 for GUI
+3 for Masks
