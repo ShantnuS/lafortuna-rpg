@@ -20,15 +20,16 @@
 #define MAGENTA     0xF81F      
 #define YELLOW      0xFFE0      
 
-#define R_4 1 << 3
-#define G_4 1 << 1
-#define B_4 1 << 0
-#define R_6 1 << 4
-#define G_6 1 << 2
-#define B_6 1 << 0
-#define R_16 1 << 11
-#define G_16 1 << 5
-#define B_16 1 << 0
+#define VERT_FLIP 0x8
+#define HORI_FLIP 0x10
+#define INVERT 0x20
+#define MASKID 0x7
+//#define ROTATIONS 0x60
+//#define ROTCW 0x20
+//#define ROTCCW 0x40
+//#define ROT180 0x60
+//#define INVERT 0x80
+
 
 typedef enum {North, West, South, East} orientation;
 
@@ -58,9 +59,13 @@ void display_string(char *str);
 void display_string_xy(char *str, uint16_t x, uint16_t y);
 void display_register(uint8_t reg);
 
-void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
-void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, char* col);
-void blend_sprite6(uint16_t l, uint16_t t, uint16_t s, char * col);
+void fill_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t* col);
+void overlay_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t * col);
+void mask_sprite8(uint16_t l, uint16_t t, uint16_t s, uint8_t * col, uint8_t * mask, uint8_t u);
+void fill_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t* col);
+void overlay_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t * col);
+void mask_sprite6(uint16_t l, uint16_t t, uint16_t s, uint8_t * col, uint8_t * mask, uint8_t u);
+void fill_sprite6_scaled(uint16_t l, uint16_t t, uint16_t s, uint8_t* col, uint16_t scale);
 
-inline uint16_t _6to16bit(char c);
-inline uint16_t _4to16bit(uint16_t c);
+
+void inc_buffer();
