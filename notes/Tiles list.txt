@@ -1,0 +1,15 @@
+----GUI----
+Gui_Left
+Gui_Right
+Gui_Middle
+
+----WALKABLE----
+Grass
+Sand
+Door
+Door_side
+
+----COLLISION----
+Roof
+Stone
+Water
