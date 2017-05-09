@@ -1,0 +1,17 @@
+y = export
+p = save
+o = load
+ctrl+c = copy
+ctrl+v = paste
+f = place tile
+q = zoom in
+e = zoom out
+k = rotate mask
+l = rotate mask
+wasd = pan screen
+ctrl+wasd = change rooms
+enter = full map view
+g = drag to place copied tile
+x = remove tile from layer
+r = replace tile in layer 
+i = insert tile in between layer
