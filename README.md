@@ -1,15 +1,15 @@
-#FortunaRPG
+# FortunaRPG
 RPG project for a LaFortuna device.
 
-#Gameplay Instructions
+# Gameplay Instructions
 something 
 
-#Compilation Instructions
+# Compilation Instructions
 something more
 
-#MapMaker
+# MapMaker
 wow
 
-#External Libraries and Resources
+# External Libraries and Resources
 blah blah
 
