@@ -49,3 +49,8 @@ clean:
 .PHONY:erase
 erase:
 	@$(DFU) $(BOARD) erase --force
+	
+.PHONY:ignore
+ignore:
+	@$(DFU) $(BOARD) --suppress-bootloader-mem
+
