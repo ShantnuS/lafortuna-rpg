@@ -1,13 +1,31 @@
 #include "main.h"
 
 // gets bytes from the world tile data
-inline uint16_t w_getw(uint8_t x, uint8_t y, uint16_t t, uint8_t part)
+//inline uint16_t w_getw(uint8_t x, uint8_t y, uint16_t t, uint8_t part)
+//{
+//	return _rw(&(w[x + y*WORLD_SIDE_SIZE][t][part]));
+//}
+//inline uint8_t w_getb(uint8_t x, uint8_t y, uint16_t t, uint8_t part)
+//{
+//	return _rb(&(w[x + y*WORLD_SIDE_SIZE][t][part]));
+//}
+
+inline uint16_t w1_getw(uint8_t x, uint8_t y, uint16_t t)
 {
-	return _rw(&(w[x + y*WORLD_SIDE_SIZE][t][part]));
+	return _rw(&(w1[x + y*14][t]));
 }
-inline uint8_t w_getb(uint8_t x, uint8_t y, uint16_t t, uint8_t part)
+inline uint8_t w1_getb(uint8_t x, uint8_t y, uint16_t t)
 {
-	return _rb(&(w[x + y*WORLD_SIDE_SIZE][t][part]));
+	return _rb(&(w1[x + y*14][t]));
+}
+
+inline uint16_t w2_getw(uint8_t x, uint8_t y, uint16_t t)
+{
+	return _rw(&(w2[x + y*14][t]));
+}
+inline uint8_t w2_getb(uint8_t x, uint8_t y, uint16_t t)
+{
+	return _rb(&(w2[x + y*14][t]));
 }
 
 // draw the gui tiles and gui information
@@ -45,7 +63,8 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 		xy = (x << 4) | (y & 0xf);
 
 	uint8_t
-		p2 = w_getb(a_x, a_y, t, 1);
+		p1 = w1_getb(a_x, a_y, t),
+		p2 = w2_getb(a_x, a_y, t);
 	//p3 = w_getb(a_x, a_y, t, 2);
 
 	//     ot opt op o
@@ -54,15 +73,15 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 	uint8_t
 		layers[4] =
 	{
-		(p2 & 0xf),
-		(p2 & 0xf0) >> 4,
+		(p1 & 0x1f),
+		((p1 & 0xe0) >> 5) | ((p2 & 0x3) << 3),
 		0,
 		0
 	},
 		mask[4] =
 	{
 		0,
-		(p2 & 0x3f),
+		(p2 & 0xfc) >> 2,
 		0,
 		0
 	};
@@ -86,16 +105,16 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 				{
 					if ((combat_npcs[m][5] & 0x4) == 0x4)
 						if (_rb(&npcs[m][0]) == a && combat_npcs[m][0] == xy)
-							overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[_rb(&npcs[m][2]) & 0xf][combat_npcs[m][5] & 0x3]);
+							overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[_rb(&npcs[m][2]) & 0xf]);//[combat_npcs[m][5] & 0x3]);
 				}
 				else
 				{
 					if (_rb(&npcs[m][0]) == a && _rb(&npcs[m][1]) == xy)
-						overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[_rb(&npcs[m][2]) & 0xf][(_rb(&npcs[m][2]) & 0xc0) >> 4]);
+						overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[_rb(&npcs[m][2]) & 0xf]);//[(_rb(&npcs[m][2]) & 0xc0) >> 4]);
 				}
 			}
 			if (p_prq)
-				overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[user.data_id][user.dir]);
+				overlay_sprite6(x * tile_size, y * tile_size, tile_size, npc_data[user.data_id]);// [user.dir]);
 		}
 		if (layers[l] != 0)
 		{
@@ -105,7 +124,7 @@ void redraw_tile(uint8_t a_x, uint8_t a_y, uint8_t x, uint8_t y)
 			}
 			else if (l == 1)
 			{
-				mask_sprite6(x * tile_size, y * tile_size, tile_size, tile_data[layers[l]], mask_data[(mask[l] & 0x7)], mask[l]);
+				//mask_sprite6(x * tile_size, y * tile_size, tile_size, tile_data[layers[l]], mask_data[(mask[l] & 0x7)], mask[l]);
 			}
 		}
 	}
@@ -118,9 +137,9 @@ void draw_area(uint8_t x, uint8_t y)
 	display.foreground = WHITE;
 	display_string_xy("loading...", 260, 212);
 	uint8_t t_x, t_y;
-	for (t_y = 0; t_y < area_size_x; ++t_y)
-		for (t_x = 0; t_x < area_size_y; ++t_x)
-			redraw_tile(x, y, t_y, t_x);
+	for (t_y = 0; t_y < area_size_y; ++t_y)
+		for (t_x = 0; t_x < area_size_x; ++t_x)
+			redraw_tile(x, y, t_x, t_y);
 }
 
 void redraw_user()
@@ -380,7 +399,7 @@ void draw_combat_screen(uint8_t id)
 
 		if (redraw)
 		{
-			fill_sprite6_scaled(250, 10, tile_size, npc_data[_rb(&npcs[id][2]) & 0xf][front], 3);
+			fill_sprite6_scaled(250, 10, tile_size, npc_data[_rb(&npcs[id][2]) & 0xf], 3);
 
 			display.foreground = GREEN;
 			sprintf(buffer, "%-10s = lvl %-2i", user.name, user.lvl);
